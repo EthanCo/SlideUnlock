@@ -2,15 +2,15 @@
 <resources>
     <declare-styleable name="SlideUnLock">
         <!--普通状态下的图片-->
-        <attr name="normalImageSrc" format="reference" />
+        <attr name="normalKeyholeSrc" format="reference" />
         <!--按下状态时候的图片-->
-        <attr name="pressImageSrc" format="reference" />
+        <attr name="pressKeyholeSrc" format="reference" />
         <!--可以解锁/已解锁状态下的图片-->
-        <attr name="unlockImageSrc" format="reference" />
+        <attr name="unlockKeyholeSrc" format="reference" />
 
         <!--最大可以移动到的距离-->
         <attr name="farestDistance" format="dimension" />
         <!--可解锁时的距离 需小于farestDistance-->
-        <attr name="lockDistance" format="dimension" />
+        <attr name="preLockDistance" format="dimension" />
     </declare-styleable>
 </resources>

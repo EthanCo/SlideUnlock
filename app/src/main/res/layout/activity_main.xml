@@ -14,7 +14,9 @@
     <com.ethanco.slideunlock.SlideUnlock
         android:layout_width="500dp"
         android:layout_height="500dp"
-        app:normalImageSrc="@mipmap/ic_lock_default"
-        app:pressImageSrc="@mipmap/ic_lock_press"
-        app:unlockImageSrc="@mipmap/ic_lock_unlock" />
+        app:farestDistance="200dp"
+        app:lockDistance="150dp"
+        app:normalKeyholeSrc="@mipmap/ic_lock_default"
+        app:pressKeyholeSrc="@mipmap/ic_lock_press"
+        app:unlockKeyholeSrc="@mipmap/ic_lock_unlock" />
 </RelativeLayout>

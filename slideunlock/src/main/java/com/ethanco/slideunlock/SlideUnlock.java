@@ -11,14 +11,14 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
-import android.widget.Toast;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description 滑动解锁
@@ -38,9 +38,8 @@ public class SlideUnlock extends View {
     private RectF pointRectF;
     private PointF centerPoint;
     PointF currPoint;
-    boolean isTouchDown = false;
     private float farestDistance = 250; //最大距离
-    private float lockDistance = 200; //解锁距离
+    private float preLockDistance = 200; //解锁距离
 
     public static final int NORMAL = 0;
     public static final int PRESS = 1;
@@ -48,9 +47,9 @@ public class SlideUnlock extends View {
     public static final int UNLOCKED = 3;
     private Bitmap bitmapPress;
     private Bitmap bitmapUnLock;
-    private int normalImageRes;
-    private int pressImageRes;
-    private int unlockImageSrc;
+    private int normalKeyholeRes;
+    private int pressKeyholeRes;
+    private int unlockKeyholeSrc;
 
     @IntDef({NORMAL, PRESS, UNLOCK, UNLOCKED})
     @Retention(RetentionPolicy.SOURCE)
@@ -93,33 +92,40 @@ public class SlideUnlock extends View {
 
     private void initVar(Context context, AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.SlideUnLock);
-        normalImageRes = ta.getResourceId(R.styleable.SlideUnLock_normalImageSrc, R.drawable.ic_launcher);
-        pressImageRes = ta.getResourceId(R.styleable.SlideUnLock_pressImageSrc, R.drawable.ic_launcher);
-        unlockImageSrc = ta.getResourceId(R.styleable.SlideUnLock_unlockImageSrc, R.drawable.ic_launcher);
+        normalKeyholeRes = ta.getResourceId(R.styleable.SlideUnLock_normalKeyholeSrc, R.drawable.ic_launcher);
+        pressKeyholeRes = ta.getResourceId(R.styleable.SlideUnLock_pressKeyholeSrc, R.drawable.ic_launcher);
+        unlockKeyholeSrc = ta.getResourceId(R.styleable.SlideUnLock_unlockKeyholeSrc, R.drawable.ic_launcher);
         farestDistance = ta.getDimension(R.styleable.SlideUnLock_farestDistance, DisplayUtil.dip2px(getContext(), 250));
-        lockDistance = ta.getDimension(R.styleable.SlideUnLock_lockDistance, DisplayUtil.dip2px(getContext(), 200));
+        preLockDistance = ta.getDimension(R.styleable.SlideUnLock_preLockDistance, DisplayUtil.dip2px(getContext(), 200));
         ta.recycle();
     }
 
     private void init(Context context) {
-        mBitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBitPaint.setFilterBitmap(true); //对位图进行防锯齿
-        mBitPaint.setDither(true);
-
+        initPaint();
         initBitmap();
     }
 
+    private void initPaint() {
+        mBitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBitPaint.setFilterBitmap(true); //对位图进行防锯齿
+        mBitPaint.setDither(true);
+    }
+
     private void initBitmap() {
-        bitmapNormal = BitmapFactory.decodeResource(getResources(), normalImageRes);
-        bitmapPress = BitmapFactory.decodeResource(getResources(), pressImageRes);
-        bitmapUnLock = BitmapFactory.decodeResource(getResources(), unlockImageSrc);
+        bitmapNormal = BitmapFactory.decodeResource(getResources(), normalKeyholeRes);
+        bitmapPress = BitmapFactory.decodeResource(getResources(), pressKeyholeRes);
+        bitmapUnLock = BitmapFactory.decodeResource(getResources(), unlockKeyholeSrc);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        BitmapUtil.drawImage(canvas, getPointBitmap(), currPoint.x - mRadius, currPoint.y - mRadius, mRadius * 2, mRadius * 2);
+        float left = currPoint.x - mRadius;
+        float top = currPoint.y - mRadius;
+        float expectWidth = mRadius * 2;
+        float expectHeight = mRadius * 2;
+        BitmapUtil.drawImage(canvas, getPointBitmap(), left, top, expectWidth, expectHeight);
     }
 
     @Override
@@ -139,64 +145,87 @@ public class SlideUnlock extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (event.getX() > pointRectF.left && event.getX() < pointRectF.right) {
-                    if (event.getY() > pointRectF.top && event.getY() < pointRectF.bottom) {
-                        isTouchDown = true;
-                        setCurrStatus(PRESS);
-                        updateDragCenter(event.getX(), event.getY());
-                        return true;
-                    }
+                if (isKeyholeScope(event)) {
+                    setCurrStatus(PRESS);
+                    updateKeyhole(event.getX(), event.getY());
+                    return true;
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 double distance = GeometryUtil.getDistanceBetween2Points(centerPoint, new PointF(event.getX(), event.getY()));
                 if (distance <= farestDistance) {
-                    if (distance > lockDistance) {
+                    if (distance > preLockDistance) {
                         setCurrStatus(UNLOCK);
                     } else {
-                        if (getCurrStatus() != PRESS) {
-                            setCurrStatus(PRESS);
-                        }
+                        if (getCurrStatus() != PRESS) setCurrStatus(PRESS);
                     }
-                    updateDragCenter(event.getX(), event.getY());
+                    updateKeyhole(event.getX(), event.getY());
                 } else {
-                    Toast.makeText(getContext(), "开锁状态", Toast.LENGTH_SHORT).show();
+                    unlockCallback();
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 final PointF fixedPoint = new PointF(currPoint.x, currPoint.y);
                 distance = GeometryUtil.getDistanceBetween2Points(centerPoint, currPoint);
-                if (distance > lockDistance) {
+                if (distance > preLockDistance) {
                     setCurrStatus(UNLOCKED);
-                    Toast.makeText(getContext(), "开锁", Toast.LENGTH_SHORT).show();
                     invalidate();
+                    unlockCallback();
                 } else {
                     setCurrStatus(NORMAL);
-                    ValueAnimator backAnim = ValueAnimator.ofFloat(0, 1);
-                    backAnim.setDuration(750);
-                    backAnim.setInterpolator(new BounceInterpolator());
-                    backAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            float percent = (float) animation.getAnimatedValue();
-                            PointF p = GeometryUtil.getPointByPercent(fixedPoint, centerPoint, percent);
-                            Log.i(TAG, "onAnimationUpdate x:" + p.x + " y:" + p.y);
-                            updateDragCenter(p.x, p.y);
-                        }
-                    });
-                    backAnim.start();
-
+                    startBackAnim(fixedPoint);
                 }
                 break;
-            case MotionEvent.ACTION_CANCEL:
-                break;
-            default:
         }
         return super.onTouchEvent(event);
     }
 
-    private void updateDragCenter(float x, float y) {
+    /**
+     * 触碰点在锁孔(按钮)范围之内
+     *
+     * @param event
+     * @return
+     */
+    private boolean isKeyholeScope(MotionEvent event) {
+        return event.getX() > pointRectF.left && event.getX() < pointRectF.right
+                && event.getY() > pointRectF.top && event.getY() < pointRectF.bottom;
+    }
+
+    private void startBackAnim(final PointF fixedPoint) {
+        ValueAnimator backAnim = ValueAnimator.ofFloat(0, 1);
+        backAnim.setDuration(750);
+        backAnim.setInterpolator(new BounceInterpolator());
+        backAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float percent = (float) animation.getAnimatedValue();
+                PointF p = GeometryUtil.getPointByPercent(fixedPoint, centerPoint, percent);
+                updateKeyhole(p.x, p.y);
+            }
+        });
+        backAnim.start();
+    }
+
+    private void updateKeyhole(float x, float y) {
         currPoint.set(x, y);
         invalidate();
+    }
+
+    public interface OnUnlockListener {
+        void onUnlock();
+    }
+
+    List<OnUnlockListener> unlockListeners = new ArrayList<>();
+
+    public void addUnlockListeners(OnUnlockListener unlockListner) {
+        if (!unlockListeners.contains(unlockListner)) {
+            unlockListeners.add(unlockListner);
+        }
+    }
+
+    public void unlockCallback() {
+        for (OnUnlockListener unlockListener : unlockListeners) {
+            unlockListener.onUnlock();
+        }
     }
 }
