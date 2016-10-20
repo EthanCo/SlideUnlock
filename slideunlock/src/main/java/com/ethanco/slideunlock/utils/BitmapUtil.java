@@ -1,4 +1,4 @@
-package com.ethanco.slideunlock;
+package com.ethanco.slideunlock.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

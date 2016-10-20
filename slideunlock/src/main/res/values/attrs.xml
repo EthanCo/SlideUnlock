@@ -12,5 +12,7 @@
         <attr name="farestDistance" format="dimension" />
         <!--可解锁时的距离 需小于farestDistance-->
         <attr name="preLockDistance" format="dimension" />
+        <!--图片按钮半径-->
+        <attr name="keyholeRadius" format="dimension" />
     </declare-styleable>
 </resources>
