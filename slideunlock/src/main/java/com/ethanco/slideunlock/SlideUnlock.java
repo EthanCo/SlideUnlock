@@ -50,6 +50,8 @@ public class SlideUnlock extends View {
     private PointF centerPoint;
     //现在keyhole所在的中心点
     private PointF currPoint;
+    //回弹动画
+    private ValueAnimator springbackAnim;
 
     //最大距离
     private float farestDistance = 250;
@@ -113,7 +115,7 @@ public class SlideUnlock extends View {
 
         int height = getViewHeight(getContext(), heightMeasureSpec, mHeight);
         int width = getViewWidth(getContext(), widthMeasureSpec, mWidth);
-        setMeasuredDimension(width,height);
+        setMeasuredDimension(width, height);
     }
 
     @Override
@@ -143,10 +145,16 @@ public class SlideUnlock extends View {
         float y = event.getY();
 
         switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//            case MotionEvent.ACTION_MOVE:
+//            case MotionEvent.ACTION_UP:
+//                updateKeyhole(x, y);
+//                return true;
             case MotionEvent.ACTION_DOWN:
 
                 //判断触碰点是否在keyhole范围之内
                 if (isKeyholeScope(event)) {
+                    cacelSpringbackAnim();
                     setCurrStatus(PRESS);
                     updateKeyhole(x, y);
                     return true;
@@ -154,7 +162,7 @@ public class SlideUnlock extends View {
                 break;
 
             case MotionEvent.ACTION_MOVE:
-
+                cacelSpringbackAnim();
                 PointF tempPoint = new PointF(event.getX(), event.getY());
                 currDistance = getDistanceBetween2Points(centerPoint, tempPoint);
                 if (currDistance <= farestDistance) {
@@ -177,7 +185,7 @@ public class SlideUnlock extends View {
                 } else {
                     setCurrStatus(NORMAL);
                     //开始回退动画
-                    startBackAnim(fixedPoint);
+                    startSpringbackAnim(fixedPoint);
                 }
                 break;
 
@@ -265,11 +273,11 @@ public class SlideUnlock extends View {
                 && event.getY() > keyholeRectF.top && event.getY() < keyholeRectF.bottom;
     }
 
-    private void startBackAnim(final PointF fixedPoint) {
-        ValueAnimator backAnim = ValueAnimator.ofFloat(0, 1);
-        backAnim.setDuration(750);
-        backAnim.setInterpolator(new BounceInterpolator());
-        backAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    private void startSpringbackAnim(final PointF fixedPoint) {
+        springbackAnim = ValueAnimator.ofFloat(0, 1);
+        springbackAnim.setDuration(750);
+        springbackAnim.setInterpolator(new BounceInterpolator());
+        springbackAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float percent = (float) animation.getAnimatedValue();
@@ -277,7 +285,14 @@ public class SlideUnlock extends View {
                 updateKeyhole(p.x, p.y);
             }
         });
-        backAnim.start();
+        springbackAnim.start();
+    }
+
+    //取消正在运行的动画
+    private void cacelSpringbackAnim() {
+        if (springbackAnim != null && springbackAnim.isRunning()) {
+            springbackAnim.cancel();
+        }
     }
 
     //更新keyhole位置

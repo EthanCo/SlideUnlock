@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:farestDistance="200dp"
-        app:keyholeRadius="60dp"
+        app:keyholeRadius="30dp"
         app:preLockDistance="150dp"
         app:normalKeyholeSrc="@mipmap/ic_lock_default"
         app:pressKeyholeSrc="@mipmap/ic_lock_press"
