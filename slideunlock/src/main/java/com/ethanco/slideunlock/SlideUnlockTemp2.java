@@ -10,6 +10,7 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
@@ -32,8 +33,9 @@ import static com.ethanco.slideunlock.utils.MeasureUtil.getViewWidth;
  * Created by EthanCo on 2016/10/18.
  */
 
-public class SlideUnlock extends View {
+public class SlideUnlockTemp2 extends View {
 
+    public static final String TAG = "Z-";
     //View高
     private int mHeight;
     //View宽
@@ -87,11 +89,11 @@ public class SlideUnlock extends View {
     @LockStatus
     private int currStatus = NORMAL;  //现在的状态
 
-    public SlideUnlock(Context context, AttributeSet attrs) {
+    public SlideUnlockTemp2(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public SlideUnlock(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SlideUnlockTemp2(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initVar(context, attrs);
     }
@@ -113,7 +115,7 @@ public class SlideUnlock extends View {
 
         int height = getViewHeight(getContext(), heightMeasureSpec, mHeight);
         int width = getViewWidth(getContext(), widthMeasureSpec, mWidth);
-        setMeasuredDimension(width,height);
+        setMeasuredDimension(width, height);
     }
 
     @Override
@@ -134,6 +136,7 @@ public class SlideUnlock extends View {
         float top = currPoint.y - keyholeRadius;
         float expectWidth = keyholeRadius * 2;
         float expectHeight = keyholeRadius * 2;
+        Log.i(TAG, "onDraw drawImage: " + currStatus);
         drawImage(canvas, getKeyholeBitmap(), left, top, expectWidth, expectHeight);
     }
 
@@ -144,32 +147,35 @@ public class SlideUnlock extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-
+                Log.i("Z-", "onTouchEvent down: ");
                 //判断触碰点是否在keyhole范围之内
                 if (isKeyholeScope(event)) {
                     setCurrStatus(PRESS);
                     updateKeyhole(x, y);
                     return true;
+                } else {
+                    return true;
                 }
-                break;
-
             case MotionEvent.ACTION_MOVE:
-
+                Log.i("Z-", "onTouchEvent move: ");
                 PointF tempPoint = new PointF(event.getX(), event.getY());
                 currDistance = getDistanceBetween2Points(centerPoint, tempPoint);
                 if (currDistance <= farestDistance) {
                     //检查状态并进行切换
                     switchStatus();
-                    updateKeyhole(x, y);
                 } else {
                     unlockCallback();
                 }
+                updateKeyhole(x, y);
                 break;
 
             case MotionEvent.ACTION_UP:
-
+                Log.i("Z-", "onTouchEvent up: ");
+                setCurrStatus(NORMAL);
+                updateKeyhole(x, y);
                 final PointF fixedPoint = new PointF(currPoint.x, currPoint.y);
                 currDistance = getDistanceBetween2Points(centerPoint, currPoint);
+                Log.i(TAG, "onTouchEvent centerPoint.x:" + centerPoint.x + "centerPoint.y:" + centerPoint.y + "currPoint.x:" + currPoint.x + " currPoint.y:" + currPoint.y + "currDistance: " + currDistance);
                 if (currDistance > preLockDistance) {
                     setCurrStatus(UNLOCKED);
                     invalidate();
@@ -182,7 +188,8 @@ public class SlideUnlock extends View {
                 break;
 
         }
-        return super.onTouchEvent(event);
+        return true;
+        //return super.onTouchEvent(event);
     }
 
     //============================= Z-具体的方法 ==============================/
@@ -210,6 +217,7 @@ public class SlideUnlock extends View {
 
     //设置状态
     public void setCurrStatus(@LockStatus int currStatus) {
+        Log.i(TAG, "setCurrStatus : " + currStatus);
         this.currStatus = currStatus;
     }
 
@@ -283,7 +291,7 @@ public class SlideUnlock extends View {
     //更新keyhole位置
     private void updateKeyhole(float x, float y) {
         currPoint.set(x, y);
-        invalidate();
+        postInvalidate();
     }
 
     //============================= Z-开放的接口 ==============================/

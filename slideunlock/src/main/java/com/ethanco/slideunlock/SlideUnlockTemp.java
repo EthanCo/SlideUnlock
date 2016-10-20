@@ -32,7 +32,7 @@ import static com.ethanco.slideunlock.utils.MeasureUtil.getViewWidth;
  * Created by EthanCo on 2016/10/18.
  */
 
-public class SlideUnlock extends View {
+public class SlideUnlockTemp extends View {
 
     //View高
     private int mHeight;
@@ -87,11 +87,11 @@ public class SlideUnlock extends View {
     @LockStatus
     private int currStatus = NORMAL;  //现在的状态
 
-    public SlideUnlock(Context context, AttributeSet attrs) {
+    public SlideUnlockTemp(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public SlideUnlock(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SlideUnlockTemp(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initVar(context, attrs);
     }
@@ -113,7 +113,7 @@ public class SlideUnlock extends View {
 
         int height = getViewHeight(getContext(), heightMeasureSpec, mHeight);
         int width = getViewWidth(getContext(), widthMeasureSpec, mWidth);
-        setMeasuredDimension(width,height);
+        setMeasuredDimension(width, height);
     }
 
     @Override
@@ -137,6 +137,8 @@ public class SlideUnlock extends View {
         drawImage(canvas, getKeyholeBitmap(), left, top, expectWidth, expectHeight);
     }
 
+    boolean isStartUnlock = false;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
@@ -144,32 +146,45 @@ public class SlideUnlock extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-
                 //判断触碰点是否在keyhole范围之内
-                if (isKeyholeScope(event)) {
+                isStartUnlock = isKeyholeScope(event);
+                if (isStartUnlock) {
+                    isStartUnlock = true;
                     setCurrStatus(PRESS);
                     updateKeyhole(x, y);
-                    return true;
                 }
-                break;
+                return isStartUnlock;
 
             case MotionEvent.ACTION_MOVE:
+                if (!isStartUnlock) {
+                    return super.onTouchEvent(event);
+                }
+
 
                 PointF tempPoint = new PointF(event.getX(), event.getY());
                 currDistance = getDistanceBetween2Points(centerPoint, tempPoint);
                 if (currDistance <= farestDistance) {
                     //检查状态并进行切换
                     switchStatus();
-                    updateKeyhole(x, y);
                 } else {
                     unlockCallback();
                 }
+                updateKeyhole(x, y);
                 break;
 
-            case MotionEvent.ACTION_UP:
+//            case MotionEvent.ACTION_UP:
+//            case MotionEvent.ACTION_CANCEL:
+//            case MotionEvent.ACTION_OUTSIDE:
+
+//                break;
+            default:
+                if (!isStartUnlock) {
+                    return super.onTouchEvent(event);
+                }
 
                 final PointF fixedPoint = new PointF(currPoint.x, currPoint.y);
                 currDistance = getDistanceBetween2Points(centerPoint, currPoint);
+                updateKeyhole(x, y);
                 if (currDistance > preLockDistance) {
                     setCurrStatus(UNLOCKED);
                     invalidate();
@@ -179,7 +194,6 @@ public class SlideUnlock extends View {
                     //开始回退动画
                     startBackAnim(fixedPoint);
                 }
-                break;
 
         }
         return super.onTouchEvent(event);
