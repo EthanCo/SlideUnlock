@@ -145,11 +145,6 @@ public class SlideUnlock extends View {
         float y = event.getY();
 
         switch (event.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//            case MotionEvent.ACTION_MOVE:
-//            case MotionEvent.ACTION_UP:
-//                updateKeyhole(x, y);
-//                return true;
             case MotionEvent.ACTION_DOWN:
 
                 //判断触碰点是否在keyhole范围之内
