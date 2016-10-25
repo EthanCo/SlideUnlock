@@ -52,7 +52,7 @@ Add it in your root build.gradle at the end of repositories:
         app:pressKeyholeSrc="@mipmap/ic_lock_press"
         app:unlockKeyholeSrc="@mipmap/ic_lock_unlock" />  
 
-### 解锁监听 ###
+### 解锁解锁监听 ###
 
 	slideUnlock.addUnlockListeners(new SlideUnlock.OnUnlockListener() {
         @Override
