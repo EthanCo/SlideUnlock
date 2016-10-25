@@ -3,7 +3,7 @@
 
 ![SlideUnlock](/SlideUnlock.gif)
 
-### [Apk下载](/SLideUnlock.apk) ###
+### [Apk下载](https://github.com/EthanCo/SlideUnlock/raw/master/SlideUnlock.apk) ###
 
 ## 添加依赖 ##
 
